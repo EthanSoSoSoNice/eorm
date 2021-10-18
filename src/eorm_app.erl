@@ -1,0 +1,18 @@
+%%%-------------------------------------------------------------------
+%% @doc eorm public API
+%% @end
+%%%-------------------------------------------------------------------
+
+-module(eorm_app).
+
+-behaviour(application).
+
+-export([start/2, stop/1]).
+
+start(_StartType, _StartArgs) ->
+    eorm_sup:start_link().
+
+stop(_State) ->
+    ok.
+
+%% internal functions
