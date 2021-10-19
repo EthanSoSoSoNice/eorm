@@ -82,7 +82,7 @@ load(Ref, Type, Value) ->
     primary_key = #eorm_primary_key{
       field = PrimaryKey
     }
-  } = eorm_env:lookup(?EORM_TABLE_META, {Ref, Type}),
+  } = eorm_env:lookup_table_meta(Ref, Type),
   SelectOp = #eorm_select_operation{
     table_name = TableName,
     key_value = Value,

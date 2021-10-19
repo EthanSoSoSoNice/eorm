@@ -15,28 +15,27 @@
   execute_operations/2,
   execute_operation/2,
   load_table/2,
-  start/3,
-  stop/2
+  start/2,
+  stop/1
 ]).
 
 %%%============================================================
 %%% API
 %%%============================================================
-start(Ref, Adaptor, Args) ->
-  case Adaptor of
+start(Ref, Args) ->
+  case eorm_env:lookup_env(Ref, adaptor) of
     emysql ->
       eorm_emysql_adaptor:start(Ref, Args)
   end.
 
-stop(Ref, Adaptor) ->
-  case Adaptor of
+stop(Ref) ->
+  case eorm_env:lookup_env(Ref, adaptor) of
     emysql ->
       eorm_emysql_adaptor:stop(Ref)
   end.
 
 load_table(Ref, Table) ->
-  Adaptor = eorm_env:lookup(?EORM_ENV_TAB, {Ref, adaptor}),
-  case Adaptor of
+  case eorm_env:lookup_env(Ref, adaptor) of
     emysql ->
       eorm_emysql_adaptor:select_table_info(Ref, Table)
   end.

@@ -1,0 +1,4 @@
+[{<<"emysql">>,
+  {git,"https://github.com/wangweining/Emysql.git",
+       {ref,"a171b332e9460ddd4f4d78368f8f073c77463ca6"}},
+  0}].

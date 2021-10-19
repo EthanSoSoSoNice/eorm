@@ -13,9 +13,13 @@
 %% API
 -export([
   start_link/0,
-  save/3,
-  lookup/2,
-  clear/0
+  save_env/3,
+  save_table_meta/2,
+  save_field_meta/3,
+  lookup_field_meta/3,
+  lookup_table_meta/2,
+  lookup_env/2,
+  clear/1
 ]).
 
 
@@ -38,6 +42,35 @@
 start_link() ->
   gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
+-spec save_table_meta(atom(), #eorm_table_meta{}) -> ok.
+save_table_meta(Ref, TableMeta)->
+  save(?EORM_TABLE_META, {Ref, TableMeta#eorm_table_meta.table_name}, TableMeta).
+
+save_field_meta(Ref, TableName, FieldMeta) ->
+  save(?EORM_TABLE_FIELDS, {Ref, TableName,FieldMeta#eorm_field_meta.name}, FieldMeta).
+
+lookup_field_meta(Ref, TableName, FieldName) ->
+  lookup(?EORM_TABLE_FIELDS, {Ref, TableName, FieldName}).
+
+save_env(Ref, Key, Value) ->
+  save(?EORM_ENV_TAB, {Ref, Key}, Value).
+
+-spec lookup_env(atom(), any()) -> any() | undefined.
+lookup_env(Ref, Key) ->
+  lookup(?EORM_ENV_TAB, {Ref, Key}).
+
+-spec lookup_table_meta(atom(), atom()) -> #eorm_table_meta{} | undefined.
+lookup_table_meta(Ref, Tab) ->
+  lookup(?EORM_TABLE_META, {Ref, Tab}).
+
+clear(Ref) ->
+  ets:match_delete(?EORM_TABLE_META, {{Ref, '_'}, '_'}),
+  ets:match_delete(?EORM_ENV_TAB, {{Ref, '_'}, '_'}),
+  ets:match_delete(?EORM_TABLE_FIELDS, {{Ref, '_', '_'}, '_'}).
+
+%%==============================================================
+%% Internal
+%%==============================================================
 
 -spec save(atom(), any(), any()) -> ok.
 save(Ets, Key, Value) ->
@@ -52,11 +85,6 @@ lookup(Ets, Key) ->
     [{_K, V}] ->
       V
   end.
-
-clear() ->
-  ets:delete_all_objects(?EORM_ENV_TAB),
-  ets:delete_all_objects(?EORM_TABLE_META),
-  ets:delete_all_objects(?EORM_TABLE_FIELDS).
 
 %%========================================================
 %% GenServer Callback

@@ -24,13 +24,13 @@
 
 -spec get_fields(Ref::atom(), Type::atom()) -> Fields :: [#eorm_field_meta{}].
 get_fields(Ref, Type) ->
-  Meta = eorm_env:lookup(?EORM_TABLE_META, {Ref, Type}),
+  Meta = eorm_env:lookup_table_meta(Ref, Type),
   Meta#eorm_table_meta.fields.
 
 
 -spec get_primary_key(Ref::atom(), Type::atom()) -> #eorm_primary_key{}.
 get_primary_key(Ref, Type) ->
-  Meta = eorm_env:lookup(?EORM_TABLE_META, {Ref, Type}),
+  Meta = eorm_env:lookup_table_meta(Ref, Type),
   Meta#eorm_table_meta.primary_key.
 
 -spec get_default_value(Ref::atom(), Type::atom(), Field::atom()) -> any().

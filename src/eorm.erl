@@ -13,17 +13,21 @@
 
 %% API
 -export([
+  start_link/0,
   run/2,
   stop/1,
-  load_object/3,
   load_table/2,
   register_table/2
 ]).
 
 
-%%-------------------------------------------
+
+%%----------------------------------------------------
 %% API
-%%-------------------------------------------
+%%----------------------------------------------------
+
+start_link() ->
+  gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 %% @doc
 %% params [
@@ -35,37 +39,38 @@
 -spec run(Ref::atom(), Params::list()) -> ok.
 run(Ref, Params) when is_atom(Ref), is_list(Params) ->
   %% check if res is registered
-  ?assert(eorm_env:lookup(?EORM_ENV_TAB, Ref) =:= undefined),
+  ?assert(eorm_env:lookup_env(Ref, adaptor) =:= undefined),
 
   %% check params
   DBArgs = proplists:get_value(db_args, Params, undefined),
   ?assert(DBArgs =/= undefined),
+
   %% todo ?assert(checkDBArgs(DBArgs)),
-
-  %% start db pool
-  Adaptor = proplists:get_value(adaptor, Params, emysql),
-  Result = eorm_database:start(Ref, Adaptor, DBArgs),
-  ?assertMatch(ok, Result),
-
   %% save env
-  eorm_env:save(?EORM_ENV_TAB, {Ref, adaptor}, Adaptor),
-  eorm_env:save(?EORM_ENV_TAB, Ref, true),
-  ok.
+  Adaptor = proplists:get_value(adaptor, Params, emysql),
+  eorm_env:save_env(Ref, adaptor, Adaptor),
+
+  Startup = fun() ->
+  %% start db pool
+    Result = eorm_database:start(Ref, DBArgs),
+    ?assertMatch(ok, Result)
+  end,
+
+  case catch Startup() of
+    {'EXIT', Error} ->
+      eorm_env:clear(Ref),
+      error(Error);
+    _ ->
+      ok
+  end.
 
 %% @doc
 %%
 %% @end
 -spec stop(Ref::atom()) -> ok.
 stop(Ref) ->
-  Adaptor = eorm_env:lookup(?EORM_ENV_TAB, {Ref, adaptor}),
-  eorm_database:stop(Ref, Adaptor),
-  eorm_env:clear().
-
--spec load_object(atom(), atom(), any()) -> eorm_object:eorm_object().
-load_object(Ref, Type, KeyValue) ->
-  TableMeta = eorm_env:lookup_table_meta(?EORM_TABLE_META, {Ref, Type}),
-  ?assert(TableMeta =/= undefined),
-  eorm_object:load(Ref, Type, KeyValue).
+  eorm_database:stop(Ref),
+  eorm_env:clear(Ref).
 
 -spec load_table(atom(), atom()) -> #eorm_table_meta{}.
 load_table(Ref, Tab) ->
@@ -79,12 +84,11 @@ load_table(Ref, Tab) ->
 -spec register_table(Ref::atom(), TableMeta::#eorm_table_meta{}) -> ok.
 register_table(Ref, TableMeta) ->
   TableName = TableMeta#eorm_table_meta.table_name,
-  ?assert(eorm_env:lookup(?EORM_TABLE_META, TableName) =:= undefined),
-  eorm_env:save(?EORM_TABLE_META, {Ref, TableName}, TableMeta),
+  ?assert(eorm_env:lookup_table_meta(Ref, TableName) =:= undefined),
+  eorm_env:save_table_meta(Ref, TableMeta),
   lists:foreach(
     fun(FieldMeta) ->
-      FieldName = FieldMeta#eorm_field_meta.name,
-      eorm_env:save(?EORM_TABLE_FIELDS, {Ref, TableName, FieldName}, FieldMeta)
+      eorm_env:save_field_meta(Ref, TableName, FieldMeta)
     end,
     TableMeta#eorm_table_meta.fields).
 
