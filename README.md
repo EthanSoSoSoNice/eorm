@@ -2,7 +2,7 @@
 orm implementation in Erlang
 
 ## Exmaple
-
+```erlang
 Ref = eorm_test,
   ok = eorm:run(
     Ref,
@@ -32,8 +32,9 @@ Ref = eorm_test,
   Demo6Guid = eorm_object:get(guid, Demo6),
   Demo6Name = eorm_object:get(name, Demo6),
   eorm_object:flush(eorm_object:delete(Demo5)).
-  
+  ```
   ## Exmaple Sql
+  ```sql
   /*
 Navicat MySQL Data Transfer
 
@@ -62,3 +63,4 @@ CREATE TABLE `eorm_demo` (
   PRIMARY KEY (`guid`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1063 DEFAULT CHARSET=utf8;
 
+```
